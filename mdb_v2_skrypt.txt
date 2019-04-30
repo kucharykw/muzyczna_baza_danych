@@ -1,0 +1,276 @@
+﻿-- MySQL Workbench Forward Engineering
+
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL,ALLOW_INVALID_DATES';
+
+-- -----------------------------------------------------
+-- Schema music_db_v2
+-- -----------------------------------------------------
+
+-- -----------------------------------------------------
+-- Schema music_db_v2
+-- -----------------------------------------------------
+CREATE SCHEMA IF NOT EXISTS `music_db_v2` DEFAULT CHARACTER SET utf8 ;
+USE `music_db_v2` ;
+
+-- -----------------------------------------------------
+-- Table `music_db_v2`.`wydawnictwa`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `music_db_v2`.`wydawnictwa` ;
+
+CREATE TABLE IF NOT EXISTS `music_db_v2`.`wydawnictwa` (
+  `wydawnictwo` CHAR(30) NOT NULL,
+  `miasto_wydawnictwa` CHAR(30) NULL DEFAULT NULL,
+  `kraj_wydawnictwa` CHAR(30) NULL DEFAULT NULL,
+  PRIMARY KEY (`wydawnictwo`),
+  UNIQUE INDEX `wydawnictwo_UNIQUE` (`wydawnictwo` ASC))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
+
+
+-- -----------------------------------------------------
+-- Table `music_db_v2`.`wykonawcy`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `music_db_v2`.`wykonawcy` ;
+
+CREATE TABLE IF NOT EXISTS `music_db_v2`.`wykonawcy` (
+  `nazwa_wykonawcy` CHAR(50) NOT NULL,
+  `aktywny_od` YEAR(4) NULL DEFAULT NULL,
+  `kraj_wykonawcy` CHAR(30) NULL DEFAULT NULL,
+  PRIMARY KEY (`nazwa_wykonawcy`),
+  UNIQUE INDEX `nazwa_wykonawcy_UNIQUE` (`nazwa_wykonawcy` ASC))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
+
+
+-- -----------------------------------------------------
+-- Table `music_db_v2`.`albumy`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `music_db_v2`.`albumy` ;
+
+CREATE TABLE IF NOT EXISTS `music_db_v2`.`albumy` (
+  `IA` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `tytul_albumu` CHAR(50) NOT NULL,
+  `rok_wydania` YEAR(4) NULL DEFAULT NULL,
+  `wykonawca_albumu` CHAR(50) NOT NULL,
+  `wydawca_albumu` CHAR(30) NULL DEFAULT NULL,
+  `gatunek` CHAR(30) NULL DEFAULT NULL,
+  PRIMARY KEY (`IA`),
+  INDEX `FK_wykonawca_idx` (`wykonawca_albumu` ASC),
+  INDEX `FK_wydawnictwo_idx` (`wydawca_albumu` ASC),
+  CONSTRAINT `FK_wydawnictwo`
+    FOREIGN KEY (`wydawca_albumu`)
+    REFERENCES `music_db_v2`.`wydawnictwa` (`wydawnictwo`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `FK_wykonawca`
+    FOREIGN KEY (`wykonawca_albumu`)
+    REFERENCES `music_db_v2`.`wykonawcy` (`nazwa_wykonawcy`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB
+AUTO_INCREMENT = 11
+DEFAULT CHARACTER SET = utf8;
+
+
+-- -----------------------------------------------------
+-- Table `music_db_v2`.`czlonkowie`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `music_db_v2`.`czlonkowie` ;
+
+CREATE TABLE IF NOT EXISTS `music_db_v2`.`czlonkowie` (
+  `IC` INT(11) NOT NULL AUTO_INCREMENT,
+  `imie` CHAR(15) NOT NULL,
+  `nazwisko` CHAR(25) NOT NULL,
+  `zespol` CHAR(35) NOT NULL,
+  `rok_urodzenia` YEAR(4) NULL DEFAULT NULL,
+  PRIMARY KEY (`IC`),
+  INDEX `FK_zespol_idx` (`zespol` ASC),
+  CONSTRAINT `FK_zespol`
+    FOREIGN KEY (`zespol`)
+    REFERENCES `music_db_v2`.`wykonawcy` (`nazwa_wykonawcy`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB
+AUTO_INCREMENT = 12
+DEFAULT CHARACTER SET = utf8;
+
+
+-- -----------------------------------------------------
+-- Table `music_db_v2`.`oceny_albumow`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `music_db_v2`.`oceny_albumow` ;
+
+CREATE TABLE IF NOT EXISTS `music_db_v2`.`oceny_albumow` (
+  `IO` INT(11) NOT NULL AUTO_INCREMENT,
+  `album_id` INT(10) UNSIGNED NOT NULL,
+  `ocena_1_10` INT(10) UNSIGNED NULL DEFAULT NULL,
+  `recenzja_uzytkownika` VARCHAR(2000) NULL DEFAULT NULL,
+  PRIMARY KEY (`IO`),
+  INDEX `album_id_idx` (`IO` ASC, `album_id` ASC),
+  INDEX `album_id` (`album_id` ASC),
+  CONSTRAINT `album_id`
+    FOREIGN KEY (`album_id`)
+    REFERENCES `music_db_v2`.`albumy` (`IA`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB
+AUTO_INCREMENT = 11
+DEFAULT CHARACTER SET = utf8;
+
+
+-- -----------------------------------------------------
+-- Table `music_db_v2`.`rolling_stone_ranking`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `music_db_v2`.`rolling_stone_ranking` ;
+
+CREATE TABLE IF NOT EXISTS `music_db_v2`.`rolling_stone_ranking` (
+  `pozycja` INT(11) NOT NULL,
+  `tytul_utworu_rank` CHAR(50) NOT NULL,
+  `wykonawca_rank` CHAR(50) NOT NULL,
+  PRIMARY KEY (`pozycja`),
+  UNIQUE INDEX `pozycja_UNIQUE` (`pozycja` ASC))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
+
+
+-- -----------------------------------------------------
+-- Table `music_db_v2`.`utwory`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `music_db_v2`.`utwory` ;
+
+CREATE TABLE IF NOT EXISTS `music_db_v2`.`utwory` (
+  `Id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `pozycja_w_albumie` INT(10) UNSIGNED NOT NULL,
+  `tytul_utworu` CHAR(50) NOT NULL,
+  `czas_trwania` TIME NULL DEFAULT NULL,
+  `Id_album` INT(10) UNSIGNED NOT NULL,
+  `pozycja_RS` INT(11) NOT NULL,
+  PRIMARY KEY (`Id`),
+  UNIQUE INDEX `tytul_utworu_UNIQUE` (`tytul_utworu` ASC),
+  UNIQUE INDEX `pozycja_RS_UNIQUE` (`pozycja_RS` ASC),
+  INDEX `FK_album_idx` (`Id_album` ASC),
+  CONSTRAINT `FK_album`
+    FOREIGN KEY (`Id_album`)
+    REFERENCES `music_db_v2`.`albumy` (`IA`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `FK_rank`
+    FOREIGN KEY (`pozycja_RS`)
+    REFERENCES `music_db_v2`.`rolling_stone_ranking` (`pozycja`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB
+AUTO_INCREMENT = 11
+DEFAULT CHARACTER SET = utf8;
+
+USE `music_db_v2` ;
+
+-- -----------------------------------------------------
+-- Placeholder table for view `music_db_v2`.`album_ocena`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `music_db_v2`.`album_ocena` (`tytul_albumu` INT, `ocena_1_10` INT, `recenzja_uzytkownika` INT);
+
+-- -----------------------------------------------------
+-- Placeholder table for view `music_db_v2`.`album_podstawowe`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `music_db_v2`.`album_podstawowe` (`tytul_albumu` INT, `wykonawca_albumu` INT, `rok_wydania` INT, `wydawca_albumu` INT);
+
+-- -----------------------------------------------------
+-- Placeholder table for view `music_db_v2`.`czlonkowie_podstawowe`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `music_db_v2`.`czlonkowie_podstawowe` (`imie` INT, `nazwisko` INT, `rok_urodzenia` INT, `zespol` INT);
+
+-- -----------------------------------------------------
+-- Placeholder table for view `music_db_v2`.`czlonkowie_zespol`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `music_db_v2`.`czlonkowie_zespol` (`imie` INT, `nazwisko` INT, `rok_urodzenia` INT, `zespol` INT, `kraj_wykonawcy` INT);
+
+-- -----------------------------------------------------
+-- Placeholder table for view `music_db_v2`.`ranking`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `music_db_v2`.`ranking` (`pozycja` INT, `tytul_utworu_rank` INT, `wykonawca_rank` INT);
+
+-- -----------------------------------------------------
+-- Placeholder table for view `music_db_v2`.`utwor_album`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `music_db_v2`.`utwor_album` (`tytul_utworu` INT, `czas_trwania` INT, `tytul_albumu` INT, `wykonawca_albumu` INT);
+
+-- -----------------------------------------------------
+-- Placeholder table for view `music_db_v2`.`wydawnictwa_podstawowe`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `music_db_v2`.`wydawnictwa_podstawowe` (`wydawnictwo` INT, `miasto_wydawnictwa` INT, `kraj_wydawnictwa` INT);
+
+-- -----------------------------------------------------
+-- Placeholder table for view `music_db_v2`.`wykonawcy_podstawowe`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `music_db_v2`.`wykonawcy_podstawowe` (`nazwa_wykonawcy` INT, `aktywny_od` INT, `kraj_wykonawcy` INT);
+
+-- -----------------------------------------------------
+-- View `music_db_v2`.`album_ocena`
+-- -----------------------------------------------------
+DROP VIEW IF EXISTS `music_db_v2`.`album_ocena` ;
+DROP TABLE IF EXISTS `music_db_v2`.`album_ocena`;
+USE `music_db_v2`;
+CREATE  OR REPLACE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `music_db_v2`.`album_ocena` AS select `a`.`tytul_albumu` AS `tytul_albumu`,`b`.`ocena_1_10` AS `ocena_1_10`,`b`.`recenzja_uzytkownika` AS `recenzja_uzytkownika` from (`music_db_v2`.`albumy` `a` join `music_db_v2`.`oceny_albumow` `b` on((`a`.`IA` = `b`.`album_id`)));
+
+-- -----------------------------------------------------
+-- View `music_db_v2`.`album_podstawowe`
+-- -----------------------------------------------------
+DROP VIEW IF EXISTS `music_db_v2`.`album_podstawowe` ;
+DROP TABLE IF EXISTS `music_db_v2`.`album_podstawowe`;
+USE `music_db_v2`;
+CREATE  OR REPLACE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `music_db_v2`.`album_podstawowe` AS select `music_db_v2`.`albumy`.`tytul_albumu` AS `tytul_albumu`,`music_db_v2`.`albumy`.`wykonawca_albumu` AS `wykonawca_albumu`,`music_db_v2`.`albumy`.`rok_wydania` AS `rok_wydania`,`music_db_v2`.`albumy`.`wydawca_albumu` AS `wydawca_albumu` from `music_db_v2`.`albumy`;
+
+-- -----------------------------------------------------
+-- View `music_db_v2`.`czlonkowie_podstawowe`
+-- -----------------------------------------------------
+DROP VIEW IF EXISTS `music_db_v2`.`czlonkowie_podstawowe` ;
+DROP TABLE IF EXISTS `music_db_v2`.`czlonkowie_podstawowe`;
+USE `music_db_v2`;
+CREATE  OR REPLACE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `music_db_v2`.`czlonkowie_podstawowe` AS select `music_db_v2`.`czlonkowie`.`imie` AS `imie`,`music_db_v2`.`czlonkowie`.`nazwisko` AS `nazwisko`,`music_db_v2`.`czlonkowie`.`rok_urodzenia` AS `rok_urodzenia`,`music_db_v2`.`czlonkowie`.`zespol` AS `zespol` from `music_db_v2`.`czlonkowie`;
+
+-- -----------------------------------------------------
+-- View `music_db_v2`.`czlonkowie_zespol`
+-- -----------------------------------------------------
+DROP VIEW IF EXISTS `music_db_v2`.`czlonkowie_zespol` ;
+DROP TABLE IF EXISTS `music_db_v2`.`czlonkowie_zespol`;
+USE `music_db_v2`;
+CREATE  OR REPLACE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `music_db_v2`.`czlonkowie_zespol` AS select `a`.`imie` AS `imie`,`a`.`nazwisko` AS `nazwisko`,`a`.`rok_urodzenia` AS `rok_urodzenia`,`a`.`zespol` AS `zespol`,`b`.`kraj_wykonawcy` AS `kraj_wykonawcy` from (`music_db_v2`.`czlonkowie` `a` join `music_db_v2`.`wykonawcy` `b` on((`a`.`zespol` = `b`.`nazwa_wykonawcy`)));
+
+-- -----------------------------------------------------
+-- View `music_db_v2`.`ranking`
+-- -----------------------------------------------------
+DROP VIEW IF EXISTS `music_db_v2`.`ranking` ;
+DROP TABLE IF EXISTS `music_db_v2`.`ranking`;
+USE `music_db_v2`;
+CREATE  OR REPLACE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `music_db_v2`.`ranking` AS select `music_db_v2`.`rolling_stone_ranking`.`pozycja` AS `pozycja`,`music_db_v2`.`rolling_stone_ranking`.`tytul_utworu_rank` AS `tytul_utworu_rank`,`music_db_v2`.`rolling_stone_ranking`.`wykonawca_rank` AS `wykonawca_rank` from `music_db_v2`.`rolling_stone_ranking` order by `music_db_v2`.`rolling_stone_ranking`.`pozycja`;
+
+-- -----------------------------------------------------
+-- View `music_db_v2`.`utwor_album`
+-- -----------------------------------------------------
+DROP VIEW IF EXISTS `music_db_v2`.`utwor_album` ;
+DROP TABLE IF EXISTS `music_db_v2`.`utwor_album`;
+USE `music_db_v2`;
+CREATE  OR REPLACE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `music_db_v2`.`utwor_album` AS select `a`.`tytul_utworu` AS `tytul_utworu`,`a`.`czas_trwania` AS `czas_trwania`,`b`.`tytul_albumu` AS `tytul_albumu`,`b`.`wykonawca_albumu` AS `wykonawca_albumu` from (`music_db_v2`.`utwory` `a` join `music_db_v2`.`albumy` `b` on((`a`.`Id_album` = `b`.`IA`)));
+
+-- -----------------------------------------------------
+-- View `music_db_v2`.`wydawnictwa_podstawowe`
+-- -----------------------------------------------------
+DROP VIEW IF EXISTS `music_db_v2`.`wydawnictwa_podstawowe` ;
+DROP TABLE IF EXISTS `music_db_v2`.`wydawnictwa_podstawowe`;
+USE `music_db_v2`;
+CREATE  OR REPLACE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `music_db_v2`.`wydawnictwa_podstawowe` AS select `music_db_v2`.`wydawnictwa`.`wydawnictwo` AS `wydawnictwo`,`music_db_v2`.`wydawnictwa`.`miasto_wydawnictwa` AS `miasto_wydawnictwa`,`music_db_v2`.`wydawnictwa`.`kraj_wydawnictwa` AS `kraj_wydawnictwa` from `music_db_v2`.`wydawnictwa`;
+
+-- -----------------------------------------------------
+-- View `music_db_v2`.`wykonawcy_podstawowe`
+-- -----------------------------------------------------
+DROP VIEW IF EXISTS `music_db_v2`.`wykonawcy_podstawowe` ;
+DROP TABLE IF EXISTS `music_db_v2`.`wykonawcy_podstawowe`;
+USE `music_db_v2`;
+CREATE  OR REPLACE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `music_db_v2`.`wykonawcy_podstawowe` AS select `music_db_v2`.`wykonawcy`.`nazwa_wykonawcy` AS `nazwa_wykonawcy`,`music_db_v2`.`wykonawcy`.`aktywny_od` AS `aktywny_od`,`music_db_v2`.`wykonawcy`.`kraj_wykonawcy` AS `kraj_wykonawcy` from `music_db_v2`.`wykonawcy`;
+
+SET SQL_MODE=@OLD_SQL_MODE;
+SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
+SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
